@@ -70,6 +70,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./data/caddy-data:/data
       - ./data/caddy-config:/config
+    networks:
+      default:
+        aliases:
+         - "${STOAT_DOMAIN:-caddy}"
 
   # API server
   api:
