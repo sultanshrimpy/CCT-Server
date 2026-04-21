@@ -1,4 +1,9 @@
-{$HOSTNAME} {
+{
+   servers {
+       max_header_size 5GB
+   }
+}
+:80 {
 	route /api* {
 		uri strip_prefix /api
 		reverse_proxy http://api:14702 {
@@ -15,6 +20,9 @@
 
 	route /autumn* {
 		uri strip_prefix /autumn
+		request_body {
+		    max_size 0
+		}
 		reverse_proxy http://autumn:14704 {
 			header_down Location "^/" "/autumn/"
 		}
@@ -27,17 +35,13 @@
 		}
 	}
 
-	route /gifbox* {
-		uri strip_prefix /gifbox
-		reverse_proxy http://gifbox:14706 {
-			header_down Location "^/" "/gifbox/"
-		}
-	}
-
 	route /livekit* {
 		uri strip_prefix /livekit
 		reverse_proxy http://livekit:7880 {
-			header_down Location "^/" "/livekit/"
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up Connection "Upgrade"
+			header_up Upgrade $http_upgrade
 		}
 	}
 
@@ -47,6 +51,13 @@
 			header_down Location "^/" "/ingress/"
 		}
 	}
-
+        
+	route /stage-bridge* {
+		uri strip_prefix /stage-bridge
+		reverse_proxy http://stage-bridge:8600 {
+			header_down Location "^/" "/stage-bridge/"
+		}
+	}
+	
 	reverse_proxy http://web:5000
 }

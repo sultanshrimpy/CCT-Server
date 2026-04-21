@@ -64,8 +64,8 @@ services:
     restart: always
     env_file: .env.web
     ports:
-      - "80:80"
-      - "443:443"
+      - "88:80"
+      - "448:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./data/caddy-data:/data
@@ -73,11 +73,14 @@ services:
     networks:
       default:
         aliases:
-         - "${STOAT_DOMAIN:-caddy}"
+          - cct.wtf
+#         - "${STOAT_DOMAIN:-caddy}"
 
   # API server
   api:
     image: ghcr.io/stoatchat/api:v0.11.1
+    extra_hosts:
+      - "cct.wtf:172.18.0.1"
     depends_on:
       database:
         condition: service_healthy
@@ -126,16 +129,19 @@ services:
       - type: bind
         source: ./Revolt.toml
         target: /Revolt.toml
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     restart: always
 
   # Tenor proxy
-  gifbox:
-    image: ghcr.io/stoatchat/gifbox:v0.11.1
-    volumes:
-      - type: bind
-        source: ./Revolt.toml
-        target: /Revolt.toml
-    restart: always
+#  gifbox:
+ #   image: ghcr.io/stoatchat/gifbox:v0.11.1
+  #  volumes:
+   #   - type: bind
+    #    source: ./Revolt.toml
+     #   target: /Revolt.toml
+  #  restart: always
 
   # Regular task daemon
   crond:
@@ -188,7 +194,9 @@ services:
         condition: service_started
     command: --config /etc/livekit.yml
     ports:
-      - "7881:7881"
+      - "7880:7880/tcp"
+      - "7881:7881/tcp"
+      - "3478:3478/udp"
       - "50000-50100:50000-50100/udp"
     restart: always
     volumes:
@@ -213,6 +221,23 @@ services:
 
   # Web App
   web:
-    image: ghcr.io/stoatchat/for-web:103d2bf
+    image: cct-frontend
+# ghcr.io/stoatchat/for-web:103d2bf
     restart: always
     env_file: .env.web
+
+  stage-bridge:
+    build:
+      context: ./stage-bridge
+    restart: always
+    environment:
+      - LIVEKIT_URL=ws://livekit:7880
+      - LIVEKIT_API_KEY=fe2acd880f5f
+      - LIVEKIT_API_SECRET=962afc05bf11b1ac44f7613824f125f3f94a9c60edef848d
+      - REDIS_URL=redis://redis:6379
+      - PORT=8600
+    depends_on:
+      livekit:
+        condition: service_started
+      redis:
+        condition: service_started

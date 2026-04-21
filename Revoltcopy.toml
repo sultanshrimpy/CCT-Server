@@ -1,0 +1,40 @@
+[hosts]
+app = "https://cct.wtf"
+api = "https://cct.wtf/api"
+events = "wss://cct.wtf/ws"
+autumn = "https://cct.wtf/autumn"
+january = "https://cct.wtf/january"
+
+[hosts.livekit]
+worldwide = "wss://cct.wtf/livekit"
+
+[api]
+
+#[api.registration]
+#invite_only = true
+
+#[api.smtp]
+#host = "live.smtp.mailtrap.io"
+#username = "api"
+#password = "249f471b4118d2e1c19d57870cf902d7"
+#from_address = "hello@cct.wtf"
+#reply_to = "chat.cctgaming@gmail.com"
+#port = 587
+#use_tls = true
+
+[pushd.vapid]
+private_key = "LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUpRQWpHNWN5NHdsOFFWODFTU1BTS1VkR1Nyai81ZUpXN2pSdHlkQWsvcWJvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFTXBnZHlBVjZDYlhuRmRLb0VUd1IrbGs0YVF0TVNCa1cwT2lQSDhpOEpvVEk2YW55anRZdQpjeE5acnFHZXl0b2JQczRLQnBiRHZIY3dHMi9KU3kxNU13PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo"
+public_key = "BDKYHcgFegm15xXSqBE8EfpZOGkLTEgZFtDojx_IvCaEyOmp8o7WLnMTWa6hnsraGz7OCgaWw7x3MBtvyUsteTM"
+
+[files]
+encryption_key = "jadVmEBzAmKo2x7xmgRpCPA1Lt9ONROPtHj28t/Tc+g="
+
+[api.livekit.nodes.worldwide]
+url = "http://livekit:7880"
+lat = 0.0
+lon = 0.0
+key = "fe2acd880f5f"
+secret = "962afc05bf11b1ac44f7613824f125f3f94a9c60edef848d"
+
+[voice]
+enabled = true
