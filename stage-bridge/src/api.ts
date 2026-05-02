@@ -14,6 +14,8 @@ import { get_links, set_links, add_links, remove_link, clear_links } from "./sto
 import { get_active_sessions } from "./bridge";
 import { make_audience_token } from "./bridge";
 
+export const api_router = Router();
+
 // GET /audience-token/:stageChannelId/:userIdentity
 // Returns a subscriber-only token for an audience member to listen to a stage feed
 api_router.get(
@@ -30,7 +32,6 @@ api_router.get(
   }
 );
 
-export const api_router = Router();
 
 // GET /links/:stageChannelId
 // Returns the list of audience channels linked to a stage channel
