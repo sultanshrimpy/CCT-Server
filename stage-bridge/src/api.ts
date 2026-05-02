@@ -19,8 +19,8 @@ export const api_router = Router();
 // GET /audience-token/:stageChannelId/:userIdentity
 // Returns a subscriber-only token for an audience member to listen to a stage feed
 api_router.get(
-  "/audience-token/:stageChannelId/:userIdentity
-  async (req: Request. res: Response) => {
+  "/audience-token/:stageChannelId/:userIdentity",
+  async (req: Request, res: Response) => {
     const { stageChannelId, userIdentity } = req.params;
     try {
       const token = await make_audience_token(stageChannelId, userIdentity);
