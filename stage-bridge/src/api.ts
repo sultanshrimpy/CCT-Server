@@ -12,6 +12,23 @@
 import { Router, Request, Response } from "express";
 import { get_links, set_links, add_links, remove_link, clear_links } from "./store";
 import { get_active_sessions } from "./bridge";
+import { make_audience_token } from "./bridge";
+
+// GET /audience-token/:stageChannelId/:userIdentity
+// Returns a subscriber-only token for an audience member to listen to a stage feed
+api_router.get(
+  "/audience-token/:stageChannelId/:userIdentity
+  async (req: Request. res: Response) => {
+    const { stageChannelId, userIdentity } = req.params;
+    try {
+      const token = await make_audience_token(stageChannelId, userIdentity);
+      res.json({ token });
+    } catch (e) {
+      console.error("[api] Error generating audience token:", e);
+      res.status(500).json({error: "Failed to generate roken" });
+    }
+  }
+);
 
 export const api_router = Router();
 
