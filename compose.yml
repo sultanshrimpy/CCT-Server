@@ -78,7 +78,7 @@ services:
 
   # API server
   api:
-    image: ghcr.io/stoatchat/api:v0.12.0
+    image: ghcr.io/stoatchat/api:v0.13.5
     extra_hosts:
       - "cct.wtf:172.18.0.1"
     env_file: secrets.env
