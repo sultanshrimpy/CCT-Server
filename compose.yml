@@ -29,11 +29,11 @@ services:
     volumes:
       - ./data/rabbit:/var/lib/rabbitmq
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 5s
       timeout: 10s
-      retries: 3
-      start_period: 20s
+      retries: 5
+      start_period: 30s
 
   # MinIO: S3-compatible storage server
   minio:
@@ -183,7 +183,7 @@ services:
   voice-ingress:
     image: ghcr.io/stoatchat/voice-ingress:v0.13.5
     env_file: secrets.env
-    restart: always
+    restart: on-failure
     depends_on:
       database:
         condition: service_healthy
@@ -247,3 +247,12 @@ services:
         condition: service_started
       redis:
         condition: service_started
+
+  dicebot:
+    build: /root/dicebot/dicebot
+    restart: unless-stopped
+    environment:
+      - REVOLT_BOT_TOKEN=TGgvBOI7I73x7SM1R0W4Zawf45ITglnsu-kAlKZp3RpHrnhZfhzQLcv-MqmL44aR
+      - REVOLT_API_URL=http://web:3000
+    depends_on:
+      - web

@@ -4,20 +4,22 @@
    }
 }
 :80 {
+	route /api/admin* {
+		reverse_proxy http://web:5000
+	}
+
 	route /api* {
 		uri strip_prefix /api
 		reverse_proxy http://api:14702 {
 			header_down Location "^/" "/api/"
 		}
 	}
-
 	route /ws {
 		uri strip_prefix /ws
 		reverse_proxy http://events:14703 {
 			header_down Location "^/" "/ws/"
 		}
 	}
-
 	route /autumn* {
 		uri strip_prefix /autumn
 		request_body {
@@ -27,14 +29,12 @@
 			header_down Location "^/" "/autumn/"
 		}
 	}
-
 	route /january* {
 		uri strip_prefix /january
 		reverse_proxy http://january:14705 {
 			header_down Location "^/" "/january/"
 		}
 	}
-
 	route /livekit* {
 		uri strip_prefix /livekit
 		reverse_proxy http://livekit:7880 {
@@ -44,7 +44,6 @@
 			header_up Upgrade $http_upgrade
 		}
 	}
-
 	route /ingress* {
 		uri strip_prefix /ingress
 		reverse_proxy http://voice-ingress:8500 {
