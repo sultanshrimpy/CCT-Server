@@ -18,10 +18,15 @@ services:
   redis:
     image: docker.io/eqalpha/keydb
     restart: always
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # RabbitMQ: Internal message broker
   rabbit:
-    image: docker.io/rabbitmq:4
+    image: docker.io/rabbitmq:4-management
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: rabbituser
@@ -30,10 +35,10 @@ services:
       - ./data/rabbit:/var/lib/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
-      interval: 5s
+      interval: 10s
       timeout: 10s
-      retries: 5
-      start_period: 30s
+      retries: 10
+      start_period: 60s
 
   # MinIO: S3-compatible storage server
   minio:
@@ -74,7 +79,6 @@ services:
       default:
         aliases:
           - cct.wtf
-#         - "${STOAT_DOMAIN:-caddy}"
 
   # API server
   api:
@@ -86,7 +90,7 @@ services:
       database:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       rabbit:
         condition: service_healthy
     volumes:
@@ -103,7 +107,7 @@ services:
       database:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - type: bind
         source: ./Revolt.toml
@@ -154,6 +158,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      rabbit-init:
+        condition: service_completed_successfully
       minio:
         condition: service_started
     volumes:
@@ -170,7 +176,7 @@ services:
       database:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       rabbit:
         condition: service_healthy
     volumes:
@@ -179,16 +185,18 @@ services:
         target: /Revolt.toml
     restart: always
 
-   # Voice ingress daemon
+  # Voice ingress daemon
   voice-ingress:
-    image: ghcr.io/stoatchat/voice-ingress:v0.13.5
+    image: ghcr.io/stoatchat/voice-ingress:latest
     env_file: secrets.env
     restart: on-failure
     depends_on:
+      rabbit-init:
+        condition: service_completed_successfully
       database:
         condition: service_healthy
-      rabbit:
-        condition: service_healthy
+      livekit:
+        condition: service_started
     volumes:
       - type: bind
         source: ./Revolt.toml
@@ -198,7 +206,7 @@ services:
     image: ghcr.io/stoatchat/livekit-server:v1.9.13
     depends_on:
       redis:
-        condition: service_started
+        condition: service_healthy
     command: --config /etc/livekit.yml
     ports:
       - "7880:7880/tcp"
@@ -246,13 +254,28 @@ services:
       livekit:
         condition: service_started
       redis:
-        condition: service_started
+        condition: service_healthy
 
   dicebot:
     build: /root/dicebot/dicebot
     restart: unless-stopped
     environment:
       - REVOLT_BOT_TOKEN=TGgvBOI7I73x7SM1R0W4Zawf45ITglnsu-kAlKZp3RpHrnhZfhzQLcv-MqmL44aR
-      - REVOLT_API_URL=http://web:3000
+      - REVOLT_API_URL=https://cct.wtf/api
     depends_on:
-      - web
+      - api
+
+
+  rabbit-init:
+    image: curlimages/curl
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      sh -c "
+        curl -sf -u rabbituser:rabbitpass -X PUT http://rabbit:15672/api/exchanges/%2F/revolt.default -H 'Content-Type: application/json' -d '{\"type\":\"topic\",\"durable\":true}' &&
+        curl -sf -u rabbituser:rabbitpass -X PUT http://rabbit:15672/api/queues/%2F/internal.ack-prd -H 'Content-Type: application/json' -d '{\"durable\":true}' &&
+        curl -sf -u rabbituser:rabbitpass -X POST http://rabbit:15672/api/bindings/%2F/e/revolt.default/q/internal.ack-prd -H 'Content-Type: application/json' -d '{\"routing_key\":\"internal.ack-prd\"}' &&
+        echo 'RabbitMQ init complete'
+      "
