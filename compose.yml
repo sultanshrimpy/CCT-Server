@@ -279,3 +279,21 @@ services:
         curl -sf -u rabbituser:rabbitpass -X POST http://rabbit:15672/api/bindings/%2F/e/revolt.default/q/internal.ack-prd -H 'Content-Type: application/json' -d '{\"routing_key\":\"internal.ack-prd\"}' &&
         echo 'RabbitMQ init complete'
       "
+
+
+  ack-processor:
+    build:
+      context: ./ack-processor
+    restart: always
+    environment:
+      - AMQP_URL=amqp://rabbituser:rabbitpass@rabbit:5672/
+      - MONGO_URL=mongodb://database:27017
+      - MONGO_DB=revolt
+      - QUEUE_NAME=internal.ack-prd
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbit:
+        condition: service_healthy
+      rabbit-init:
+        condition: service_completed_successfully
