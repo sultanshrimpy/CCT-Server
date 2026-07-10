@@ -57,6 +57,18 @@
 			header_down Location "^/" "/stage-bridge/"
 		}
 	}
+
+	# Dev sandbox live preview only — session management endpoints
+	# (create/delete/github-submit/deploy) are NOT routed here, they only
+	# exist on the internal docker network for the `web` admin panel to
+	# call. This route is websocket-aware for Vite's HMR client.
+	route /sandbox* {
+		reverse_proxy http://dev-orchestrator:8700 {
+			header_up Connection "Upgrade"
+			header_up Upgrade {http.request.header.Upgrade}
+		}
+	}
 	
 	reverse_proxy http://web:5000
 }
+

@@ -1,0 +1,16 @@
+{
+  "name": "cct-dev-orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy": "^1.18.1",
+    "node-pty": "^1.0.0",
+    "ws": "^8.18.0"
+  }
+}
+

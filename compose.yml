@@ -238,8 +238,11 @@ services:
   web:
     image: cct-frontend
     restart: always
-    env_file: .env.web
-
+    env_file:
+      - .env.web
+      - secrets.env
+    extra_hosts:
+      - "cct.wtf:172.18.0.1"
   stage-bridge:
     build:
       context: ./stage-bridge
@@ -255,6 +258,34 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+
+  # Dev sandbox orchestrator: spins up per-developer preview containers,
+  # manages git worktrees, and handles GitHub submit + production deploy.
+  # No published port and no public Caddy route to its management API —
+  # only the `web` admin panel talks to it (internal docker network), using
+  # DEV_ORCHESTRATOR_SECRET. The live-preview traffic (/sandbox/*) IS routed
+  # publicly by Caddy straight to this service; see Caddyfile.
+  dev-orchestrator:
+    build:
+      context: ./dev-orchestrator
+    restart: always
+    env_file: secrets.env
+    environment:
+      - PORT=8700
+      - DEV_WORKSPACES_DIR=/data/dev-workspaces
+      - DEV_BARE_REPO_DIR=/data/dev-bare-repo.git
+      - SANDBOX_IMAGE=cct-sandbox
+      - SANDBOX_NETWORK=stoat_default
+      - DEPLOY_CLIENT_DIR=/deploy/client
+      - DEPLOY_STOAT_DIR=/deploy/stoat
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/dev-workspaces:/data/dev-workspaces
+      - ./data/dev-bare-repo.git:/data/dev-bare-repo.git
+      # Your real, persistent working clones — the ones deploy.js builds
+      # and restarts `web` from.
+      - ../client:/deploy/client
+      - .:/deploy/stoat
 
   dicebot:
     build: /root/dicebot/dicebot
@@ -297,3 +328,4 @@ services:
         condition: service_healthy
       rabbit-init:
         condition: service_completed_successfully
+
